@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gerar DATA a partir de planilha CC_ (upload Excel)</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+
+<body>
+  <div class="container" id="container">
+    <h1>Gerar <span class="badge">dashboard</span> a partir do Excel</h1>
+    <div class="sub">Faça upload do arquivo excel contendo abas cujo nome começa com <b>CC_</b>, assim será possível
+      detectar as colunas
+      <b>Conta Contábil</b>, <b>Descrição Conta Contábil</b> e meses no formato <b>mm yyyy</b>, e gerar os dados para
+      usar
+      no dashboard.
+    </div>
+    <div class="card">
+      <div class="row">
+        <div>
+          <label>Arquivo Excel (.xlsx ou .xls)</label>
+          <input id="file" type="file"
+            accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel">
+        </div>
+        <div style="align-self:end;">
+          <button id="btnParse" class="button">Validar arquivo</button>
+        </div>
+      </div>
+      <div id="status" style="margin-top:10px;"></div>
+    </div>
+    <!-- <div class="card">
+      <div class="row">
+        <div>
+          <div class="kv">
+            <div>Abas CC_ detectadas:</div>
+            <div id="ccSheets">—</div>
+            <div>Registros gerados:</div>
+            <div id="rowsCount">—</div>
+            <div>Anos detectados:</div>
+            <div id="anos">—</div>
+            <div>Exemplo de estrutura:</div>
+            <div><code>{{"centro_custo":"CC_XXXX","conta_contabil":"...", "ano":2024, "mes":1, "valor":1234.56}}</code>
+            </div>
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <button id="btnDownload" class="button secondary" disabled>Baixar JSON</button>
+        </div>
+      </div>
+    </div> -->
+
+    <!-- <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <div><b>JSON (DATA)</b></div>
+        <div class="copy" id="btnCopy">copiar</div>
+      </div>
+      <textarea id="jsonOut" placeholder="O JSON aparecerá aqui..." readonly></textarea>
+      <small>Dica: copie o conteúdo acima e substitua a variável <b>DATA</b> do seu dashboard.</small>
+    </div> -->
+
+    <!-- <div class="card">
+      <div style="margin-bottom:8px;"><b>Prévia (primeiras 200 linhas)</b></div>
+      <div style="max-height:300px; overflow:auto; border:1px solid #e5e7eb; border-radius:10px;">
+        <table id="preview">
+          <thead>
+            <tr>
+              <th>centro_custo</th>
+              <th>conta_contabil</th>
+              <th>ano</th>
+              <th>mes</th>
+              <th>valor</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div><b>Como usar com o dashboard</b></div>
+      <ol>
+        <li>Abra o <i>dashboard</i> HTML.</li>
+        <li>Procure por <code>const DATA = ...</code> e substitua pelo JSON gerado acima.</li>
+        <li>Salve o arquivo e recarregue a página.</li>
+      </ol>
+    </div> -->
+  </div>
+  <div class="container-dashboard" id="container-dashboard">
+    <div class="header">Dashboard de Custos <span class="badge">Interativo</span></div>
+    <div class="toolbar">
+      <div><label>Centro de Custo</label><select id="selCC"></select></div>
+      <div><label>Conta Contábil</label><select id="selConta"></select></div>
+      <div><label>Ano A</label><select id="selAnoA"></select></div>
+      <div><label>Ano B</label><select id="selAnoB"></select></div>
+      <div><label>Top N (gráficos)</label>
+        <select id="selTopN">
+          <option value="5">5</option>
+          <option value="10" selected>10</option>
+          <option value="12">12</option>
+          <option value="20">20</option>
+          <option value="50">50</option>
+          <option value="0">Todos</option>
+        </select>
+      </div>
+      <div><label>Pesquisar (CC/Conta) - Tabela</label><input id="txtSearch" placeholder="digite para filtrar..." />
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="anual">Comparativo Anual</button>
+      <button class="tab-btn" data-tab="mensal">Comparativo Mensal</button>
+    </div>
+
+    <div id="tab-anual">
+      <div class="cards">
+        <div class="card">
+          <div class="label" id="lblAnoA">Total Ano A</div>
+          <div class="value" id="cardAnoA">—</div>
+        </div>
+        <div class="card">
+          <div class="label" id="lblAnoB">Total Ano B</div>
+          <div class="value" id="cardAnoB">—</div>
+        </div>
+        <div class="card">
+          <div class="label">Diferença</div>
+          <div class="value" id="cardDiff">—</div>
+        </div>
+        <div class="card">
+          <div class="label">Variação %</div>
+          <div class="value" id="cardVar">—</div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="panel">
+          <div class="panel-title" id="ttlComparativo">Comparativo</div>
+          <svg id="chartComparativo" class="chart" viewBox="0 0 800 320"></svg>
+          <div class="legend"><span style="color:#2563eb"><span class="swatch"></span><span
+                id="lgAnoA"></span></span><span style="color:#10b981"><span class="swatch"></span><span
+                id="lgAnoB"></span></span></div>
+        </div>
+        <div class="panel">
+          <div class="panel-title" id="ttlDistribuicao">Distribuição por Centro de Custo (Ano B)</div>
+          <svg id="chartPizza" class="chart" viewBox="0 0 800 320"></svg>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title" id="ttlEvolucao">Evolução Mensal (Ano B)</div>
+        <svg id="chartLinha" class="chart" viewBox="0 0 800 320"></svg>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Detalhamento dos Dados</div>
+        <div class="table-wrap">
+          <table id="tbl">
+            <thead>
+              <tr>
+                <th>Centro de Custo</th>
+                <th>Conta Contábil</th>
+                <th id="thAnoA"></th>
+                <th id="thAnoB"></th>
+                <th>Diferença</th>
+                <th>Variação %</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-mensal" class="hidden">
+      <div class="panel">
+        <div class="panel-title" id="ttlMensal">Valores por Mês</div>
+        <svg id="chartMensal" class="chart" viewBox="0 0 800 320"></svg>
+      </div>
+    </div>
+
+    <div class="footer">Gerado em 12/08/2025 16:56 • Planilhas analisadas: CC_20101, CC_20201, CC_20202, CC_40101,
+      CC_40102, CC_40103, CC_40104, CC_40105, CC_40106, CC_40201, CC_40202, CC_40203, CC_40204</div>
+  </div>
+  <div id="tooltip"></div>
+  <div class="loader-wrapper" id="loading">
+    <div class="spinner"></div>
+    Lendo Arquivo. Por favor aguarde.
+  </div>
+
+  <!-- SheetJS (XLSX) via CDN -->
+  <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+  <script src="./process_xlsx.js"></script>
+  <!-- <script src="./dashboard.js"></script> -->
+</body>
+
+</html>
