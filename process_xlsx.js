@@ -6,6 +6,7 @@ const statusEl = $("status");
 let DATA = [];
 const loading = document.getElementById('loading');
 const container = document.getElementById('container');
+const newFile = document.getElementById('adicionar-arquivo');
 const EPS = 0.005;        // valores em moeda próximos de zero serão tratados como 0
 const BASE_MIN_PCT = 1;   // valor mínimo (R$) para calcular variação em %
 
@@ -239,6 +240,12 @@ function renderFilters(data) {
     document.getElementById("selAnoA").value = anos[0];
     document.getElementById("selAnoB").value = anos[anos.length - 1];
 }
+
+// adicionar novo arquivo para análise
+newFile.addEventListener("click", () => {
+    container.style.display = 'block';
+    document.getElementById("container-dashboard").style.display = 'none';
+});
 
 // Tabs
 document.querySelectorAll(".tab-btn").forEach(btn => btn.addEventListener("click", (e) => {

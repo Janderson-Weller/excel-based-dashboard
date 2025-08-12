@@ -132,6 +132,12 @@
      font-size: 22px;
      font-weight: 700;
      margin-bottom: 16px;
+     position: relative;
+ }
+
+ .new-file {
+     position: absolute;
+     right: 0%;
  }
 
  .badge {
@@ -176,12 +182,18 @@
      margin-bottom: 12px;
  }
 
- .tab-btn {
+ .tab-btn,
+ .new-file {
      padding: 8px 12px;
      border-radius: 999px;
      border: 1px solid #e5e7eb;
      background: #fff;
      cursor: pointer;
+ }
+
+ .new-file.active {
+     background: #111827;
+     color: #fff;
  }
 
  .tab-btn.active {
