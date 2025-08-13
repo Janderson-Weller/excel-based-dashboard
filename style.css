@@ -365,3 +365,52 @@
          transform: rotate(360deg);
      }
  }
+
+ .top-list {
+     list-style: none;
+     margin: 0;
+     padding: 0
+ }
+
+ .top-list li {
+     display: flex;
+     justify-content: space-between;
+     padding: 6px 0;
+     border-bottom: 1px solid #e5e7eb
+ }
+
+ .top-list li span.value {
+     color: #10b981;
+     font-weight: 700
+ }
+
+ .top-list-wrap {
+     /* ajuste o offset se seus cards ficarem muito altos */
+     --cards-offset: 320px;
+     /* espaço reservado para header + gráfico acima, etc. */
+     max-height: calc(100vh - var(--cards-offset));
+     overflow: auto;
+     padding-right: 6px;
+     /* evita esconder última letra sob a barra de rolagem */
+ }
+
+ /* listas e itens */
+ .top-list {
+     list-style: none;
+     margin: 0;
+     padding: 0;
+ }
+
+ .top-list li {
+     display: flex;
+     justify-content: space-between;
+     gap: 12px;
+     padding: 8px 0;
+     border-bottom: 1px solid #e5e7eb;
+ }
+
+ .top-list li span.value {
+     color: #10b981;
+     font-weight: 700;
+     white-space: nowrap;
+ }

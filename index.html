@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Gerar DATA a partir de planilha CC_ (upload Excel)</title>
   <link rel="stylesheet" href="./style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 
 <body>
@@ -184,6 +185,43 @@
         <div class="panel-title" id="ttlMensal">Valores por Mês</div>
         <svg id="chartMensal" class="chart" viewBox="0 0 800 320"></svg>
       </div>
+
+      <!-- Gráfico de Evolução -->
+      <div class="panel">
+        <div class="panel-title" id="ttlEvoMensal">Evolução Mensal</div>
+        <canvas id="chartMensalLine" height="100"></canvas>
+      </div>
+
+      <div class="panel" style="display:flex;justify-content:space-between;gap:12px;align-items:flex-end;">
+        <div>
+          <div class="panel-title">Análise Mensal <span id="anoMensalLbl"></span></div>
+          <div style="color:#6b7280;font-size:13px;">Comparativo mês a mês - crescimento por centro de custo e conta
+            contábil</div>
+        </div>
+        <div>
+          <label style="font-size:12px;color:#6b7280;display:block;margin-bottom:6px;">Mês de Referência</label>
+          <select id="selMesRef"></select>
+        </div>
+      </div>
+
+      <!-- Cards Top 5 -->
+      <div style="display:flex; gap:16px; flex-wrap:wrap;">
+        <div class="panel" style="flex:1; min-width:320px;">
+          <div class="panel-title">Centros com Maior Crescimento</div>
+          <div class="top-list-wrap">
+            <ul id="topCC" class="top-list"></ul>
+          </div>
+          <!-- <ul id="topCC" class="top-list"></ul> -->
+        </div>
+        <div class="panel" style="flex:1; min-width:320px;">
+          <div class="panel-title">Contas com Maior Crescimento</div>
+          <!-- <ul id="topContas" class="top-list"></ul> -->
+          <div class="top-list-wrap">
+            <ul id="topContas" class="top-list"></ul>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <div class="footer">Gerado em 12/08/2025 16:56 • Planilhas analisadas: CC_20101, CC_20201, CC_20202, CC_40101,

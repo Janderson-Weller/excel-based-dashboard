@@ -251,7 +251,6 @@ document.querySelectorAll(".tab-btn").forEach(btn => btn.addEventListener("click
     const tab = e.currentTarget.dataset.tab;
     document.getElementById("tab-anual").classList.toggle("hidden", tab !== "anual");
     document.getElementById("tab-mensal").classList.toggle("hidden", tab !== "mensal");
-    render(DATA);
 }));
 
 // SVG utilities (gridlines; NO fixed labels on bars)
@@ -422,6 +421,7 @@ function groupByCC(data, ano, cc, conta) {
     });
     return [...m.entries()].sort((a, b) => b[1] - a[1]);
 }
+
 function monthlySeries(data, ano, cc, conta) {
     const arr = new Array(12).fill(0);
     data.filter(d => d.ano === ano && byFilters(d, cc, conta)).forEach(d => {
@@ -429,6 +429,7 @@ function monthlySeries(data, ano, cc, conta) {
     });
     return arr;
 }
+
 function tableRows(data, anoA, anoB, cc, conta, search) {
     const q = (search || "").toLowerCase();
     // group by CC+Conta
@@ -510,6 +511,47 @@ function render(data) {
     const serieA = monthlySeries(data, anoA, cc === '*' ? null : cc, conta === '*' ? null : conta);
     barChart("chartMensal", monthNames, serieA, serieB, ["#2563eb", "#10b981"], "Ano " + anoA, "Ano " + anoB);
     document.getElementById("ttlMensal").textContent = "Valores por Mês - " + anoA + " (azul) vs " + anoB + " (verde)";
+
+    // ----- Integração da Análise Mensal (com "MêsAtual vs MêsSelecionado") -----
+    const ccSel = (cc === '*' ? null : cc);
+    const contaSel = (conta === '*' ? null : conta);
+    const selMes = document.getElementById('selMesRef');
+
+    // calcula o MÊS ATUAL: último mês (1..12) com dados para os filtros
+    const mesesComDados = monthsWithData(DATA, anoB, ccSel, contaSel);
+    const mesAtual = mesesComDados.length ? mesesComDados[mesesComDados.length - 1] : 12;
+
+    // preserva escolha anterior, se compatível
+    const prevVal = selMes.value ? +selMes.value : null;
+
+    // monta opções: TODOS os meses do ano, exceto o mês atual
+    selMes.innerHTML = '';
+    for (let m = 1; m <= 12; m++) {
+        if (m === mesAtual) continue;
+        const label = `${monthNames[mesAtual - 1]} vs ${monthNames[m - 1]}`;
+        selMes.append(new Option(label, m));
+    }
+
+    // define seleção: mantém a anterior (se válida), senão usa janeiro, senão o primeiro disponível
+    if (prevVal && prevVal !== mesAtual && prevVal >= 1 && prevVal <= 12) {
+        selMes.value = String(prevVal);
+    } else if (mesAtual !== 1) {
+        selMes.value = '1'; // por padrão compara com Janeiro
+    } else if (selMes.options.length) {
+        selMes.selectedIndex = 0;
+    }
+
+    // chama o render mensal com mêsAtual e mêsComparar
+    const mesComparar = +selMes.value;
+    renderMensalComparativo(
+        DATA,
+        anoB,
+        mesAtual,
+        mesComparar,
+        ccSel,
+        contaSel,
+        document.getElementById('txtSearch').value || ''
+    );
 }
 
 // Reactivity
@@ -517,3 +559,127 @@ function render(data) {
 let searchTimer = null;
 
 document.getElementById("txtSearch").addEventListener("input", (e) => { clearTimeout(searchTimer); searchTimer = setTimeout(() => render(DATA), 250); });
+
+// Agrupa por mês para CC e (CC,Conta)
+function aggregateByMonth(data, ano, mes, ccSel, contaSel, searchText) {
+    const q = (searchText || '').toLowerCase();
+    const aggCC = new Map();
+    const aggConta = new Map();
+
+    data.filter(d =>
+        d.ano === ano && d.mes === mes &&
+        (!ccSel || ccSel === '*' || d.centro_custo === ccSel) &&
+        (!contaSel || contaSel === '*' || d.conta_contabil === contaSel)
+    ).forEach(d => {
+        if (q && !(d.centro_custo.toLowerCase().includes(q) ||
+            String(d.conta_contabil).toLowerCase().includes(q))) return;
+
+        const v = Number(d.valor || 0);
+        aggCC.set(d.centro_custo, (aggCC.get(d.centro_custo) || 0) + v);
+        const key = d.centro_custo + '||' + d.conta_contabil;
+        aggConta.set(key, (aggConta.get(key) || 0) + v);
+    });
+
+    return { aggCC, aggConta };
+}
+
+function abrevNum(v) {
+    const n = Math.abs(v);
+    if (n >= 1_000_000) return (v / 1_000_000).toFixed(1).replace('.0', '') + ' m';
+    if (n >= 1_000) return (v / 1_000).toFixed(1).replace('.0', '') + ' k';
+    return v.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
+}
+
+// Devolve os meses com dados no ano/filtros
+function monthsWithData(data, ano, cc, conta) {
+    const has = new Set();
+    data.filter(d => d.ano === ano &&
+        (!cc || cc === '*' || d.centro_custo === cc) &&
+        (!conta || conta === '*' || d.conta_contabil === conta)
+    ).forEach(d => { if ((d.valor || 0) !== 0) has.add(d.mes); });
+    return Array.from(has).sort((a, b) => a - b);
+}
+
+// Destroi qualquer gráfico existente no canvas e cria outro
+function createOrReplaceChart(canvasId, config) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas || !(canvas instanceof HTMLCanvasElement)) {
+        console.warn(`Canvas #${canvasId} não encontrado ou não é <canvas>.`);
+        return null;
+    }
+
+    // destrói instância existente associada a este canvas (duas formas)
+    const old = (typeof Chart !== 'undefined' && Chart.getChart) ? Chart.getChart(canvas) : null;
+    if (old) old.destroy();
+    if (canvas._chartInstance) { // fallback se você guardou manualmente
+        try { canvas._chartInstance.destroy(); } catch (_) { }
+        canvas._chartInstance = null;
+    }
+
+    // cria novo gráfico
+    const chart = new Chart(canvas.getContext('2d'), config);
+    // guarda referência no próprio canvas (ajuda em debounces/race conditions)
+    canvas._chartInstance = chart;
+    return chart;
+}
+
+let chartMensalRef = null;
+
+function renderMensalComparativo(data, anoB, mesAtual, mesComparar, ccSel, contaSel, searchText) {
+    // Série mensal (para o gráfico) – já filtrada
+    const serieMensal = Array(12).fill(0);
+    data.filter(d =>
+        d.ano === anoB &&
+        (!ccSel || ccSel === '*' || d.centro_custo === ccSel) &&
+        (!contaSel || contaSel === '*' || d.conta_contabil === contaSel)
+    ).forEach(d => { serieMensal[d.mes - 1] += d.valor; });
+
+    chartMensalRef = createOrReplaceChart('chartMensalLine', {
+        type: 'line',
+        data: {
+            labels: monthNames.map((_, i) => String(i + 1).padStart(2, '0') + '/' + anoB),
+            datasets: [{
+                label: 'Evolução Mensal ' + anoB,
+                data: serieMensal,
+                borderColor: '#6366f1',
+                backgroundColor: 'rgba(99,102,241,.15)',
+                fill: true, tension: 0.35, pointRadius: 3, pointHoverRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => fmtBR(c.raw) } } },
+            scales: { y: { ticks: { callback: v => abrevNum(v) }, grid: { color: '#eef0f3' } }, x: { grid: { display: false } } }
+        }
+    });
+
+    // ---- Cálculo dos deltas (mesAtual - mesComparar) ----
+    const A = aggregateByMonth(data, anoB, mesAtual, ccSel, contaSel, searchText);
+    const B = aggregateByMonth(data, anoB, mesComparar, ccSel, contaSel, searchText);
+
+    // Centros de Custo
+    const difCC = new Map();
+    new Set([...A.aggCC.keys(), ...B.aggCC.keys()]).forEach(k => {
+        difCC.set(k, (A.aggCC.get(k) || 0) - (B.aggCC.get(k) || 0));
+    });
+    const topCC = [...difCC.entries()].sort((a, b) => b[1] - a[1]);
+    document.getElementById('topCC').innerHTML =
+        topCC.map(([cc, val]) => `<li>${cc}<span class="value">${fmtBR(val)}</span></li>`).join('');
+
+    // Contas (por CC)
+    const difContas = new Map();
+    new Set([...A.aggConta.keys(), ...B.aggConta.keys()]).forEach(k => {
+        difContas.set(k, (A.aggConta.get(k) || 0) - (B.aggConta.get(k) || 0));
+    });
+    const topContas = [...difContas.entries()]
+        .map(([k, val]) => { const [cc, conta] = k.split('||'); return { cc, conta, val }; })
+        .sort((a, b) => b.val - a.val);
+    document.getElementById('topContas').innerHTML =
+        topContas.map(r => `<li>${r.cc} / ${r.conta}<span class="value">${fmtBR(r.val)}</span></li>`).join('');
+
+    // Títulos
+    document.getElementById('ttlEvoMensal').textContent = `Evolução Mensal ${anoB}`;
+    document.getElementById('anoMensalLbl').textContent = anoB;
+}
+
+document.getElementById('selMesRef').addEventListener('change', () => render(DATA));
