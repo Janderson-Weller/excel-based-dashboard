@@ -57,6 +57,8 @@ function processSheet(name, sheet) {
     const out = [];
     for (const r of dataRows) {
         const conta = r[colConta];
+        const descricao = r[colDesc];
+
         if (conta == null || String(conta).trim() === "") continue;
         for (const i of monthIdxs) {
             const label = String(header[i]).trim(); // "mm yyyy"
@@ -68,7 +70,8 @@ function processSheet(name, sheet) {
                 conta_contabil: String(conta).trim(),
                 ano: yyyy,
                 mes: mm,
-                valor: valor
+                valor: valor,
+                descricao,
             });
         }
     }
@@ -331,7 +334,8 @@ function barChart(id, labels, seriesA, seriesB, colors, labelA, labelB) {
 }
 
 function lineChart(id, xs, ys, color) {
-    const svg = clearSVG(id); const W = 800, H = 320, padL = 56, pad = 40; const max = Math.max(1, ...ys);
+    const svg = clearSVG(id);
+    const W = 1200, H = 320, padL = 56, pad = 40; const max = Math.max(1, ...ys);
     // gridlines
     for (let i = 0; i <= 5; i++) {
         const y = H - pad - (H - 2 * pad) * i / 5;
@@ -438,14 +442,14 @@ function tableRows(data, anoA, anoB, cc, conta, search) {
     data.filter(d => byFilters(d, cc, conta)).forEach(d => {
         const key = d.centro_custo + "|" + d.conta_contabil;
         if (!map.has(key))
-            map.set(key, { cc: d.centro_custo, conta: d.conta_contabil, A: 0, B: 0 });
+            map.set(key, { descricao: d.descricao, cc: d.centro_custo, conta: d.conta_contabil, A: 0, B: 0 });
         const obj = map.get(key);
         if (d.ano === anoA) obj.A += d.valor;
         if (d.ano === anoB) obj.B += d.valor;
     });
     return [...map.values()]
         .filter(o => o.cc.toLowerCase().includes(q) || o.conta.toLowerCase().includes(q))
-        .map(o => ({ cc: o.cc, conta: o.conta, A: o.A, B: o.B, dif: o.B - o.A, var: Math.abs(o.A) < BASE_MIN_PCT ? null : (o.B - o.A) / o.A * 100 }))
+        .map(o => ({ descricao: o.descricao, cc: o.cc, conta: o.conta, A: o.A, B: o.B, dif: o.B - o.A, var: Math.abs(o.A) < BASE_MIN_PCT ? null : (o.B - o.A) / o.A * 100 }))
         .sort((a, b) => b.dif - a.dif);
 }
 
@@ -466,6 +470,7 @@ function render(data) {
     getElementById("lgAnoB").textContent = anoB;
     getElementById("thAnoA").textContent = anoA;
     getElementById("thAnoB").textContent = anoB;
+    getElementById("thVariacaoAno").textContent = `% (${anoB} vs ${anoA})`;
 
     // Cards
     const totA = totalByYear(data, anoA, cc, conta);
@@ -488,7 +493,7 @@ function render(data) {
     // Pie (Ano B)
     const gb = gB.slice(0, topN > 0 ? topN : gB.length);
     pieChart("chartPizza", gb.map(x => x[1]), gb.map(x => x[0]));
-    getElementById("ttlDistribuicao").textContent = "Distribuição por Centro de Custo (" + anoB + ") – Top " + (topN || gb.length);
+    getElementById("ttlDistribuicao").textContent = "Distribuição por Centro de Custo (" + anoB + ") - Top " + (topN || gb.length);
 
     // Linha evolução (Ano B)
     const serieB = monthlySeries(data, anoB, cc === '*' ? null : cc, conta === '*' ? null : conta);
@@ -501,7 +506,7 @@ function render(data) {
     tbody.innerHTML = "";
     rows.forEach(r => {
         const tr = document.createElement("tr");
-        tr.innerHTML = "<td>" + r.cc + "</td><td>" + r.conta + "</td>"
+        tr.innerHTML = "<td>" + r.cc + "</td><td>" + r.conta + "</td><td>" + r.descricao + "</td>"
             + "<td class='num'>" + formatBR(r.A) + "</td><td class='num'>" + formatBR(r.B) + "</td>"
             + "<td class='num'>" + formatBR(r.dif) + "</td><td class='num'>" + (r.var == null ? '100%' : formatPercentage(r.var)) + "</td>";
         tbody.appendChild(tr);
@@ -576,7 +581,7 @@ function aggregateByMonth(data, ano, mes, ccSel, contaSel, searchText) {
 
         const v = Number(d.valor || 0);
         aggCC.set(d.centro_custo, (aggCC.get(d.centro_custo) || 0) + v);
-        const key = d.centro_custo + '||' + d.conta_contabil;
+        const key = d.centro_custo + '||' + d.conta_contabil + '||' + d.descricao;
         aggConta.set(key, (aggConta.get(key) || 0) + v);
     });
 
@@ -672,10 +677,13 @@ function renderMensalComparativo(data, anoB, mesAtual, mesComparar, ccSel, conta
         difContas.set(k, (A.aggConta.get(k) || 0) - (B.aggConta.get(k) || 0));
     });
     const topContas = [...difContas.entries()]
-        .map(([k, val]) => { const [cc, conta] = k.split('||'); return { cc, conta, val }; })
+        .map(([k, val]) => {
+            const [cc, conta, descricao] = k.split('||');
+            return { cc, conta, val, descricao };
+        })
         .sort((a, b) => b.val - a.val);
     getElementById('topContas').innerHTML =
-        topContas.map(r => `<li>${r.cc} / ${r.conta}<span class="value">${formatBR(r.val)}</span></li>`).join('');
+        topContas.map(r => `<li>${r.cc} / ${r.conta} (${r.descricao})<span class="value">${formatBR(r.val)}</span></li>`).join('');
 
     // Títulos
     getElementById('ttlEvoMensal').textContent = `Evolução Mensal ${anoB}`;
