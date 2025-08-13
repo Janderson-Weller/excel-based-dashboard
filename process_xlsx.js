@@ -176,7 +176,7 @@ $("btnParse").addEventListener("click", async () => {
 // Helpers
 const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
-function fmtBR(v) {
+function formatBR(v) {
     v = Number(v || 0);
     if (Math.abs(v) < EPS) v = 0;
     return "R$ " + v.toLocaleString('pt-BR', {
@@ -185,7 +185,7 @@ function fmtBR(v) {
     });
 };
 
-function fmtP(v) {
+function formatPercentage(v) {
     if (!isFinite(v)) return '0.00';
     if (Math.abs(v) < 0.005) v = 0;
     return v.toFixed(2) + '%';
@@ -285,7 +285,7 @@ function barChart(id, labels, seriesA, seriesB, colors, labelA, labelB) {
         ln.setAttribute("stroke", "#e5e7eb");
 
         svg.appendChild(ln);
-        addText(svg, padL - 6, y + 3, fmtBR(val), 9, 'end', '#6b7280');
+        addText(svg, padL - 6, y + 3, formatBR(val), 9, 'end', '#6b7280');
     }
     // x-axis
     const ax = document.createElementNS("http://www.w3.org/2000/svg", "line");
@@ -321,10 +321,10 @@ function barChart(id, labels, seriesA, seriesB, colors, labelA, labelB) {
 
         // tooltips on hover (valor completo BRL + labels)
         [[r1, v1, labelA], [r2, v2, labelB]].forEach(([rect, val, labY]) => {
-            rect.addEventListener('mouseenter', (ev) => showTip(lab + " • " + labY + ": " + fmtBR(val), ev));
+            rect.addEventListener('mouseenter', (ev) => showTip(lab + " • " + labY + ": " + formatBR(val), ev));
             rect.addEventListener('mousemove', (ev) => moveTip(ev));
             rect.addEventListener('mouseleave', hideTip);
-            rect.setAttribute('title', fmtBR(val));
+            rect.setAttribute('title', formatBR(val));
         });
     });
 }
@@ -343,7 +343,7 @@ function lineChart(id, xs, ys, color) {
         ln.setAttribute("stroke", "#e5e7eb");
 
         svg.appendChild(ln);
-        addText(svg, padL - 6, y + 3, fmtBR(val), 9, 'end', '#6b7280');
+        addText(svg, padL - 6, y + 3, formatBR(val), 9, 'end', '#6b7280');
     }
     // axis
     const ax = document.createElementNS("http://www.w3.org/2000/svg", "line");
@@ -469,11 +469,10 @@ function render(data) {
     // Cards
     const totA = totalByYear(data, anoA, cc, conta);
     const totB = totalByYear(data, anoB, cc, conta);
-    document.getElementById("cardAnoA").textContent = fmtBR(totA);
-    document.getElementById("cardAnoB").textContent = fmtBR(totB);
-    document.getElementById("cardDiff").textContent = fmtBR(totB - totA);
-    document.getElementById("cardVarDif").textContent = fmtP(totA === 0 ? NaN : (totB - totA) / totA * 100);
-    document.getElementById("cardVar").textContent = fmtP(totA === 0 ? NaN : (totB / totA) * 100);
+    document.getElementById("cardAnoA").textContent = formatBR(totA);
+    document.getElementById("cardAnoB").textContent = formatBR(totB);
+    document.getElementById("cardDiff").textContent = formatBR(totB - totA);
+    document.getElementById("cardVar").textContent = formatPercentage(totA === 0 ? NaN : (totB / totA) * 100);
 
     // Charts (Anual) with Top N
     const gA = groupByCC(data, anoA, cc === '*' ? null : cc, conta === '*' ? null : conta);
@@ -502,8 +501,8 @@ function render(data) {
     rows.forEach(r => {
         const tr = document.createElement("tr");
         tr.innerHTML = "<td>" + r.cc + "</td><td>" + r.conta + "</td>"
-            + "<td class='num'>" + fmtBR(r.A) + "</td><td class='num'>" + fmtBR(r.B) + "</td>"
-            + "<td class='num'>" + fmtBR(r.dif) + "</td><td class='num'>" + (r.var == null ? '100%' : fmtP(r.var)) + "</td>";
+            + "<td class='num'>" + formatBR(r.A) + "</td><td class='num'>" + formatBR(r.B) + "</td>"
+            + "<td class='num'>" + formatBR(r.dif) + "</td><td class='num'>" + (r.var == null ? '100%' : formatPercentage(r.var)) + "</td>";
         tbody.appendChild(tr);
     });
 
@@ -648,7 +647,7 @@ function renderMensalComparativo(data, anoB, mesAtual, mesComparar, ccSel, conta
         },
         options: {
             responsive: true,
-            plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => fmtBR(c.raw) } } },
+            plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => formatBR(c.raw) } } },
             scales: { y: { ticks: { callback: v => abrevNum(v) }, grid: { color: '#eef0f3' } }, x: { grid: { display: false } } }
         }
     });
@@ -664,7 +663,7 @@ function renderMensalComparativo(data, anoB, mesAtual, mesComparar, ccSel, conta
     });
     const topCC = [...difCC.entries()].sort((a, b) => b[1] - a[1]);
     document.getElementById('topCC').innerHTML =
-        topCC.map(([cc, val]) => `<li>${cc}<span class="value">${fmtBR(val)}</span></li>`).join('');
+        topCC.map(([cc, val]) => `<li>${cc}<span class="value">${formatBR(val)}</span></li>`).join('');
 
     // Contas (por CC)
     const difContas = new Map();
@@ -675,7 +674,7 @@ function renderMensalComparativo(data, anoB, mesAtual, mesComparar, ccSel, conta
         .map(([k, val]) => { const [cc, conta] = k.split('||'); return { cc, conta, val }; })
         .sort((a, b) => b.val - a.val);
     document.getElementById('topContas').innerHTML =
-        topContas.map(r => `<li>${r.cc} / ${r.conta}<span class="value">${fmtBR(r.val)}</span></li>`).join('');
+        topContas.map(r => `<li>${r.cc} / ${r.conta}<span class="value">${formatBR(r.val)}</span></li>`).join('');
 
     // Títulos
     document.getElementById('ttlEvoMensal').textContent = `Evolução Mensal ${anoB}`;
