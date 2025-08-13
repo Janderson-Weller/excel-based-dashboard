@@ -1,12 +1,12 @@
 
-const $ = (id) => document.getElementById(id);
-const statusEl = $("status");
-// const previewBody = $("preview").querySelector("tbody");
+const getElementById = (id) => document.getElementById(id);
+const statusEl = getElementById("status");
+// const previewBody = getElementById("preview").querySelector("tbody");
 
 let DATA = [];
-const loading = document.getElementById('loading');
-const container = document.getElementById('container');
-const newFile = document.getElementById('adicionar-arquivo');
+const loading = getElementById('loading');
+const container = getElementById('container');
+const newFile = getElementById('adicionar-arquivo');
 const EPS = 0.005;        // valores em moeda próximos de zero serão tratados como 0
 const BASE_MIN_PCT = 1;   // valor mínimo (R$) para calcular variação em %
 
@@ -85,8 +85,8 @@ function processSheet(name, sheet) {
 //     });
 // }
 
-$("btnParse").addEventListener("click", async () => {
-    const file = $("file").files[0];
+getElementById("btnParse").addEventListener("click", async () => {
+    const file = getElementById("file").files[0];
 
     if (!file) {
         setStatus("Selecione um arquivo primeiro.");
@@ -138,12 +138,12 @@ $("btnParse").addEventListener("click", async () => {
 
     DATA = all;
     // Atualiza UI
-    // $("ccSheets").textContent = ccSheets.join(", ");
-    // $("rowsCount").textContent = all.length.toLocaleString('pt-BR');
+    // getElementById("ccSheets").textContent = ccSheets.join(", ");
+    // getElementById("rowsCount").textContent = all.length.toLocaleString('pt-BR');
     // const anos = [...new Set(all.map(r => r.ano))].sort((a, b) => a - b);
-    // $("anos").textContent = anos.join(", ");
-    // $("jsonOut").value = JSON.stringify(all, null, 2);
-    // $("btnDownload").disabled = false;
+    // getElementById("anos").textContent = anos.join(", ");
+    // getElementById("jsonOut").value = JSON.stringify(all, null, 2);
+    // getElementById("btnDownload").disabled = false;
     // renderPreview(all);
     setStatus("Pronto! dados lidos com sucesso.");
     loading.style.display = 'none';
@@ -151,22 +151,22 @@ $("btnParse").addEventListener("click", async () => {
     render(DATA);
 });
 
-// $("btnDownload").addEventListener("click", () => {
-//     const blob = new Blob([$("jsonOut").value], { type: "application/json;charset=utf-8" });
+// getElementById("btnDownload").addEventListener("click", () => {
+//     const blob = new Blob([getElementById("jsonOut").value], { type: "application/json;charset=utf-8" });
 //     const url = URL.createObjectURL(blob);
 //     const a = document.createElement("a");
 //     a.href = url; a.download = "data.json"; a.click();
 //     setTimeout(() => URL.revokeObjectURL(url), 2000);
 // });
 
-// $("btnCopy").addEventListener("click", async () => {
+// getElementById("btnCopy").addEventListener("click", async () => {
 //     try {
-//         await navigator.clipboard.writeText($("jsonOut").value);
-//         $("btnCopy").textContent = "copiado!";
-//         setTimeout(() => $("btnCopy").textContent = "copiar", 1500);
+//         await navigator.clipboard.writeText(getElementById("jsonOut").value);
+//         getElementById("btnCopy").textContent = "copiado!";
+//         setTimeout(() => getElementById("btnCopy").textContent = "copiar", 1500);
 //     } catch (e) {
-//         $("btnCopy").textContent = "falhou :(";
-//         setTimeout(() => $("btnCopy").textContent = "copiar", 1500);
+//         getElementById("btnCopy").textContent = "falhou :(";
+//         setTimeout(() => getElementById("btnCopy").textContent = "copiar", 1500);
 //     }
 // });
 
@@ -200,7 +200,7 @@ function byFilters(rec, cc, conta) {
 }
 
 // Tooltip helpers
-const TIP = document.getElementById('tooltip');
+const TIP = getElementById('tooltip');
 function showTip(text, evt) {
     TIP.textContent = text;
     TIP.style.display = 'block';
@@ -218,7 +218,7 @@ function hideTip() {
 
 // Populate selects
 function fillSelect(sel, opts, withAll = true) {
-    const el = document.getElementById(sel);
+    const el = getElementById(sel);
     el.innerHTML = "";
     if (withAll) el.append(new Option("Todos", "*"));
     opts.forEach(o => el.append(new Option(o, o)));
@@ -234,14 +234,15 @@ function renderFilters(data) {
     fillSelect("selConta", contas);
     fillSelect("selAnoA", anos, false);
     fillSelect("selAnoB", anos, false);
-    document.getElementById("selAnoA").value = anos[0];
-    document.getElementById("selAnoB").value = anos[anos.length - 1];
+    getElementById("selAnoA").value = anos[0];
+    getElementById("selAnoB").value = anos[anos.length - 1];
 }
 
 // adicionar novo arquivo para análise
 newFile.addEventListener("click", () => {
     container.style.display = 'block';
-    document.getElementById("container-dashboard").style.display = 'none';
+    getElementById("container-dashboard").style.display = 'none';
+    getElementById("file").value = '';
 });
 
 // Tabs
@@ -249,13 +250,13 @@ document.querySelectorAll(".tab-btn").forEach(btn => btn.addEventListener("click
     document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
     e.currentTarget.classList.add("active");
     const tab = e.currentTarget.dataset.tab;
-    document.getElementById("tab-anual").classList.toggle("hidden", tab !== "anual");
-    document.getElementById("tab-mensal").classList.toggle("hidden", tab !== "mensal");
+    getElementById("tab-anual").classList.toggle("hidden", tab !== "anual");
+    getElementById("tab-mensal").classList.toggle("hidden", tab !== "mensal");
 }));
 
 // SVG utilities (gridlines; NO fixed labels on bars)
 function clearSVG(id) {
-    const s = document.getElementById(id);
+    const s = getElementById(id);
     while (s.firstChild)
         s.removeChild(s.firstChild);
     return s;
@@ -450,29 +451,29 @@ function tableRows(data, anoA, anoB, cc, conta, search) {
 
 // Render
 function render(data) {
-    document.getElementById("container-dashboard").style.display = 'block';
-    const cc = document.getElementById("selCC").value;
-    const conta = document.getElementById("selConta").value;
-    const anoA = +document.getElementById("selAnoA").value;
-    const anoB = +document.getElementById("selAnoB").value;
-    const topN = +document.getElementById("selTopN").value;
-    const search = document.getElementById("txtSearch").value || "";
+    getElementById("container-dashboard").style.display = 'block';
+    const cc = getElementById("selCC").value;
+    const conta = getElementById("selConta").value;
+    const anoA = +getElementById("selAnoA").value;
+    const anoB = +getElementById("selAnoB").value;
+    const topN = +getElementById("selTopN").value;
+    const search = getElementById("txtSearch").value || "";
 
     // Labels
-    document.getElementById("lblAnoA").textContent = "Total " + anoA;
-    document.getElementById("lblAnoB").textContent = "Total " + anoB;
-    document.getElementById("lgAnoA").textContent = anoA;
-    document.getElementById("lgAnoB").textContent = anoB;
-    document.getElementById("thAnoA").textContent = anoA;
-    document.getElementById("thAnoB").textContent = anoB;
+    getElementById("lblAnoA").textContent = "Total " + anoA;
+    getElementById("lblAnoB").textContent = "Total " + anoB;
+    getElementById("lgAnoA").textContent = anoA;
+    getElementById("lgAnoB").textContent = anoB;
+    getElementById("thAnoA").textContent = anoA;
+    getElementById("thAnoB").textContent = anoB;
 
     // Cards
     const totA = totalByYear(data, anoA, cc, conta);
     const totB = totalByYear(data, anoB, cc, conta);
-    document.getElementById("cardAnoA").textContent = formatBR(totA);
-    document.getElementById("cardAnoB").textContent = formatBR(totB);
-    document.getElementById("cardDiff").textContent = formatBR(totB - totA);
-    document.getElementById("cardVar").textContent = formatPercentage(totA === 0 ? NaN : (totB / totA) * 100);
+    getElementById("cardAnoA").textContent = formatBR(totA);
+    getElementById("cardAnoB").textContent = formatBR(totB);
+    getElementById("cardDiff").textContent = formatBR(totB - totA);
+    getElementById("cardVar").textContent = formatPercentage(totA === 0 ? 100 : (totB / totA) * 100);
 
     // Charts (Anual) with Top N
     const gA = groupByCC(data, anoA, cc === '*' ? null : cc, conta === '*' ? null : conta);
@@ -482,17 +483,17 @@ function render(data) {
     const sA = labels.map(lab => (gA.find(x => x[0] === lab)?.[1]) || 0);
     const sB = labels.map(lab => (gB.find(x => x[0] === lab)?.[1]) || 0);
     barChart("chartComparativo", labels, sA, sB, ["#2563eb", "#10b981"], "Ano " + anoA, "Ano " + anoB);
-    document.getElementById("ttlComparativo").textContent = "Comparativo " + anoA + " vs " + anoB + " (Top " + (topN || labels.length) + ")";
+    getElementById("ttlComparativo").textContent = "Comparativo " + anoA + " vs " + anoB + " (Top " + (topN || labels.length) + ")";
 
     // Pie (Ano B)
     const gb = gB.slice(0, topN > 0 ? topN : gB.length);
     pieChart("chartPizza", gb.map(x => x[1]), gb.map(x => x[0]));
-    document.getElementById("ttlDistribuicao").textContent = "Distribuição por Centro de Custo (" + anoB + ") – Top " + (topN || gb.length);
+    getElementById("ttlDistribuicao").textContent = "Distribuição por Centro de Custo (" + anoB + ") – Top " + (topN || gb.length);
 
     // Linha evolução (Ano B)
     const serieB = monthlySeries(data, anoB, cc === '*' ? null : cc, conta === '*' ? null : conta);
     lineChart("chartLinha", monthNames, serieB, "#10b981");
-    document.getElementById("ttlEvolucao").textContent = "Evolução Mensal (" + anoB + ")";
+    getElementById("ttlEvolucao").textContent = "Evolução Mensal (" + anoB + ")";
 
     // Tabela com busca textual
     const rows = tableRows(data, anoA, anoB, cc === '*' ? null : cc, conta === '*' ? null : conta, search);
@@ -509,12 +510,12 @@ function render(data) {
     // Mensal: barras por mês (Ano A vs Ano B)
     const serieA = monthlySeries(data, anoA, cc === '*' ? null : cc, conta === '*' ? null : conta);
     barChart("chartMensal", monthNames, serieA, serieB, ["#2563eb", "#10b981"], "Ano " + anoA, "Ano " + anoB);
-    document.getElementById("ttlMensal").textContent = "Valores por Mês - " + anoA + " (azul) vs " + anoB + " (verde)";
+    getElementById("ttlMensal").textContent = "Valores por Mês - " + anoA + " (azul) vs " + anoB + " (verde)";
 
     // ----- Integração da Análise Mensal (com "MêsAtual vs MêsSelecionado") -----
     const ccSel = (cc === '*' ? null : cc);
     const contaSel = (conta === '*' ? null : conta);
-    const selMes = document.getElementById('selMesRef');
+    const selMes = getElementById('selMesRef');
 
     // calcula o MÊS ATUAL: último mês (1..12) com dados para os filtros
     const mesesComDados = monthsWithData(DATA, anoB, ccSel, contaSel);
@@ -549,15 +550,15 @@ function render(data) {
         mesComparar,
         ccSel,
         contaSel,
-        document.getElementById('txtSearch').value || ''
+        getElementById('txtSearch').value || ''
     );
 }
 
 // Reactivity
-["selCC", "selConta", "selAnoA", "selAnoB", "selTopN"].forEach(id => document.getElementById(id).addEventListener("change", () => render(DATA)));
+["selCC", "selConta", "selAnoA", "selAnoB", "selTopN"].forEach(id => getElementById(id).addEventListener("change", () => render(DATA)));
 let searchTimer = null;
 
-document.getElementById("txtSearch").addEventListener("input", (e) => { clearTimeout(searchTimer); searchTimer = setTimeout(() => render(DATA), 250); });
+getElementById("txtSearch").addEventListener("input", (e) => { clearTimeout(searchTimer); searchTimer = setTimeout(() => render(DATA), 250); });
 
 // Agrupa por mês para CC e (CC,Conta)
 function aggregateByMonth(data, ano, mes, ccSel, contaSel, searchText) {
@@ -601,7 +602,7 @@ function monthsWithData(data, ano, cc, conta) {
 
 // Destroi qualquer gráfico existente no canvas e cria outro
 function createOrReplaceChart(canvasId, config) {
-    const canvas = document.getElementById(canvasId);
+    const canvas = getElementById(canvasId);
     if (!canvas || !(canvas instanceof HTMLCanvasElement)) {
         console.warn(`Canvas #${canvasId} não encontrado ou não é <canvas>.`);
         return null;
@@ -662,7 +663,7 @@ function renderMensalComparativo(data, anoB, mesAtual, mesComparar, ccSel, conta
         difCC.set(k, (A.aggCC.get(k) || 0) - (B.aggCC.get(k) || 0));
     });
     const topCC = [...difCC.entries()].sort((a, b) => b[1] - a[1]);
-    document.getElementById('topCC').innerHTML =
+    getElementById('topCC').innerHTML =
         topCC.map(([cc, val]) => `<li>${cc}<span class="value">${formatBR(val)}</span></li>`).join('');
 
     // Contas (por CC)
@@ -673,12 +674,12 @@ function renderMensalComparativo(data, anoB, mesAtual, mesComparar, ccSel, conta
     const topContas = [...difContas.entries()]
         .map(([k, val]) => { const [cc, conta] = k.split('||'); return { cc, conta, val }; })
         .sort((a, b) => b.val - a.val);
-    document.getElementById('topContas').innerHTML =
+    getElementById('topContas').innerHTML =
         topContas.map(r => `<li>${r.cc} / ${r.conta}<span class="value">${formatBR(r.val)}</span></li>`).join('');
 
     // Títulos
-    document.getElementById('ttlEvoMensal').textContent = `Evolução Mensal ${anoB}`;
-    document.getElementById('anoMensalLbl').textContent = anoB;
+    getElementById('ttlEvoMensal').textContent = `Evolução Mensal ${anoB}`;
+    getElementById('anoMensalLbl').textContent = anoB;
 }
 
-document.getElementById('selMesRef').addEventListener('change', () => render(DATA));
+getElementById('selMesRef').addEventListener('change', () => render(DATA));
