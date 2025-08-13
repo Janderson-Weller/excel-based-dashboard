@@ -506,7 +506,7 @@ function render(data) {
     tbody.innerHTML = "";
     rows.forEach(r => {
         const tr = document.createElement("tr");
-        tr.innerHTML = "<td>" + r.cc + "</td><td>" + r.conta + "</td><td>" + r.descricao + "</td>"
+        tr.innerHTML = "<td>" + r.cc + "</td><td>" + r.conta + ' (' + r.descricao + ')' + "</td>"
             + "<td class='num'>" + formatBR(r.A) + "</td><td class='num'>" + formatBR(r.B) + "</td>"
             + "<td class='num'>" + formatBR(r.dif) + "</td><td class='num'>" + (r.var == null ? '100%' : formatPercentage(r.var)) + "</td>";
         tbody.appendChild(tr);
