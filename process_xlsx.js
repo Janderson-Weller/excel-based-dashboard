@@ -146,12 +146,9 @@ $("btnParse").addEventListener("click", async () => {
     // $("btnDownload").disabled = false;
     // renderPreview(all);
     setStatus("Pronto! dados lidos com sucesso.");
-
-    setTimeout(() => {
-        loading.style.display = 'none';
-        renderFilters(DATA);
-        render(DATA);
-    }, 1500);
+    loading.style.display = 'none';
+    renderFilters(DATA);
+    render(DATA);
 });
 
 // $("btnDownload").addEventListener("click", () => {
@@ -282,7 +279,8 @@ function barChart(id, labels, seriesA, seriesB, colors, labelA, labelB) {
         const y = H - pad - (H - 2 * pad) * i / 5;
         const val = max * i / 5;
         const ln = document.createElementNS("http://www.w3.org/2000/svg", "line");
-        ln.setAttribute("x1", padL); ln.setAttribute("y1", y);
+        ln.setAttribute("x1", padL);
+        ln.setAttribute("y1", y);
         ln.setAttribute("x2", W - pad);
         ln.setAttribute("y2", y);
         ln.setAttribute("stroke", "#e5e7eb");
@@ -473,7 +471,8 @@ function render(data) {
     document.getElementById("cardAnoA").textContent = fmtBR(totA);
     document.getElementById("cardAnoB").textContent = fmtBR(totB);
     document.getElementById("cardDiff").textContent = fmtBR(totB - totA);
-    document.getElementById("cardVar").textContent = fmtP(totA === 0 ? NaN : (totB - totA) / totA * 100);
+    document.getElementById("cardVarDif").textContent = fmtP(totA === 0 ? NaN : (totB - totA) / totA * 100);
+    document.getElementById("cardVar").textContent = fmtP(totA === 0 ? NaN : (totB / totA) * 100);
 
     // Charts (Anual) with Top N
     const gA = groupByCC(data, anoA, cc === '*' ? null : cc, conta === '*' ? null : conta);
@@ -503,7 +502,7 @@ function render(data) {
         const tr = document.createElement("tr");
         tr.innerHTML = "<td>" + r.cc + "</td><td>" + r.conta + "</td>"
             + "<td class='num'>" + fmtBR(r.A) + "</td><td class='num'>" + fmtBR(r.B) + "</td>"
-            + "<td class='num'>" + fmtBR(r.dif) + "</td><td class='num'>" + (r.var == null ? '0.00%' : fmtP(r.var)) + "</td>";
+            + "<td class='num'>" + fmtBR(r.dif) + "</td><td class='num'>" + (r.var == null ? '100%' : fmtP(r.var)) + "</td>";
         tbody.appendChild(tr);
     });
 
